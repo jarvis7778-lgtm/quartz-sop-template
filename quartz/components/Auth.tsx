@@ -88,13 +88,21 @@ export default ((userOpts?: AuthOptions) => {
         return user || null
       }
 
-      const updateUI = (user) => {
+      let stateRun = 0
+      const updateUI = async (user) => {
+        const currentState = ++stateRun
         loading.style.display = 'none'
         if (user) {
           loginBtn.style.display = 'none'
           userInfo.style.display = 'flex'
           avatar.src = user.user_metadata?.avatar_url || ''
           username.textContent = user.user_metadata?.user_name || user.email || '用户'
+          loading.style.display = 'block'
+          loading.textContent = '正在验证协作权限...'
+          const status = await window.readCollaborationMembership(client)
+          if (currentState !== stateRun || run !== authRun || !container.isConnected) return
+          loading.textContent = window.collaborationMembershipMessage[status]
+          loading.style.display = status === 'approved' ? 'none' : 'block'
         } else {
           loginBtn.style.display = 'flex'
           userInfo.style.display = 'none'
@@ -112,7 +120,9 @@ export default ((userOpts?: AuthOptions) => {
       loginBtn.addEventListener('click', onLogin)
       logoutBtn.addEventListener('click', onLogout)
       const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
-        if (run === authRun && container.isConnected) updateUI(session?.user || null)
+        setTimeout(() => {
+          if (run === authRun && container.isConnected) void updateUI(session?.user || null)
+        }, 0)
       })
 
       window.addCleanup(() => {
@@ -123,7 +133,7 @@ export default ((userOpts?: AuthOptions) => {
       })
 
       try {
-        updateUI(await getCurrentUser())
+        await updateUI(await getCurrentUser())
       } catch (error) {
         console.error('获取登录状态失败:', error)
         loading.textContent = '登录加载失败，请刷新重试'

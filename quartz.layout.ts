@@ -2,8 +2,14 @@ import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
 import { isFeatureEnabled } from "./site.features"
 
-const explorerFilter = (node: { slug: string; slugSegment: string }) =>
-  node.slugSegment !== "tags" && node.slug !== "Fig/index" && !node.slug.startsWith("Fig/")
+const explorerFilter = isFeatureEnabled("reservations")
+  ? (node: { slug: string; slugSegment: string }) =>
+      node.slugSegment !== "tags" && node.slug !== "Fig/index" && !node.slug.startsWith("Fig/")
+  : (node: { slug: string; slugSegment: string }) =>
+      node.slugSegment !== "tags" &&
+      node.slug !== "calendar" &&
+      node.slug !== "Fig/index" &&
+      !node.slug.startsWith("Fig/")
 
 const sharedHeaderComponents = [isFeatureEnabled("auth") ? Component.Auth() : undefined].filter(
   Boolean,

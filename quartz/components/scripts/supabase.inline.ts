@@ -1,4 +1,10 @@
 import { createClient } from "@supabase/supabase-js"
+import { readMembership, membershipMessage } from "./membership"
+
+Object.assign(window, {
+  readCollaborationMembership: readMembership,
+  collaborationMembershipMessage: membershipMessage,
+})
 
 declare global {
   interface Window {

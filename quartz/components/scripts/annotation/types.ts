@@ -39,6 +39,7 @@ export interface Annotation {
 
 /** Supabase client 接口（运行时从 window 获取） */
 export interface SupabaseClient {
+  rpc?: (name: string) => PromiseLike<{ data: unknown; error: unknown }>
   from: (table: string) => any
   auth: {
     getUser: () => Promise<{ data: { user: any } }>

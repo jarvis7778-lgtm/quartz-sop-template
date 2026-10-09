@@ -18,7 +18,7 @@
 │ Supabase                                                     │
 │ - Auth: GitHub OAuth                                         │
 │ - Database: PostgreSQL                                       │
-│ - Realtime: comments, annotations, reservations              │
+│ - Realtime: annotations, reservations; comments: refresh              │
 │                                                             │
 │ Tables: users / annotations / comments / comment_likes /     │
 │         reservations                                         │
@@ -32,7 +32,7 @@
 | `content/`                                   | Markdown pages edited by the team                   |
 | `quartz/`                                    | Quartz site generator and custom UI components      |
 | `quartz/components/Auth.tsx`                 | GitHub sign-in/out UI and Supabase client bootstrap |
-| `quartz/components/SupaComments.tsx`         | Page comments, replies, likes, and deletes          |
+| `quartz/components/SupaComments.tsx`         | Page comments, replies, manual refresh, and deletes |
 | `quartz/components/Annotation.tsx`           | Page-level annotation UI                            |
 | `quartz/components/ReservationCalendar.tsx`  | Reservation calendar UI                             |
 | `supabase/migrations/001_initial_schema.sql` | Database tables, triggers, indexes, and RLS         |

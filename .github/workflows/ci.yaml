@@ -41,9 +41,25 @@ jobs:
           SUPABASE_ANON_KEY: ${{ matrix.site-mode == 'collab' && 'public-anon-placeholder' || '' }}
         run: npx quartz build
 
+  browser-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          PLAYWRIGHT_CHANNEL: chromium
+
   database-migrations:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - name: Verify PostgreSQL migrations and grants
         run: bash scripts/verify-postgres-migrations.sh
+      - name: Verify membership identities and booking concurrency
+        run: bash scripts/test-collab-security-postgres.sh

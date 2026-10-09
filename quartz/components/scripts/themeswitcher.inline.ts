@@ -110,6 +110,9 @@ document.addEventListener("nav", () => {
       }
     }
     markSelected(current)
+    loadPresetFont(
+      options.find((option) => option.dataset.themeValue === current)?.dataset.themeFontHref,
+    )
 
     const closeMenu = () => {
       menu.hidden = true

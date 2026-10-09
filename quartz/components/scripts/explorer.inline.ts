@@ -32,10 +32,10 @@ function toggleExplorer(this: HTMLElement) {
   const nearestExplorer = this.closest(".explorer") as HTMLElement
   if (!nearestExplorer) return
   const explorerCollapsed = nearestExplorer.classList.toggle("collapsed")
-  nearestExplorer.setAttribute(
-    "aria-expanded",
-    nearestExplorer.getAttribute("aria-expanded") === "true" ? "false" : "true",
-  )
+  nearestExplorer.setAttribute("aria-expanded", String(!explorerCollapsed))
+  for (const button of nearestExplorer.querySelectorAll(".explorer-toggle")) {
+    button.setAttribute("aria-expanded", String(!explorerCollapsed))
+  }
 
   if (!explorerCollapsed) {
     // Stop <html> from being scrollable when mobile explorer is open
@@ -269,6 +269,16 @@ async function setupExplorer(currentSlug: FullSlug) {
       button.addEventListener("click", toggleExplorer)
       window.addCleanup(() => button.removeEventListener("click", toggleExplorer))
     }
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || explorer.classList.contains("collapsed")) return
+      const mobile = explorer.querySelector<HTMLElement>(".mobile-explorer")
+      if (!mobile?.checkVisibility()) return
+      toggleExplorer.call(mobile)
+      mobile.focus()
+    }
+    document.addEventListener("keydown", onEscape)
+    window.addCleanup(() => document.removeEventListener("keydown", onEscape))
 
     // Set up folder click handlers
     if (opts.folderClickBehavior === "collapse") {

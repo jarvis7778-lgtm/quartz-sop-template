@@ -52,7 +52,10 @@ supabase/migrations/001_initial_schema.sql
 supabase/migrations/002_user_sync_and_rls_patch.sql
 supabase/migrations/003_annotations_schema_update.sql
 supabase/migrations/004_security_and_content_constraints.sql
+supabase/migrations/005_collab_membership_and_named_equipment.sql
 ```
+
+Migration `005` requires explicit membership approval and makes named resources exclusive. Existing non-admin members become pending; existing overlapping bookings block migration without deleting data. Read [the upgrade and recovery guide](docs/collab-security-upgrade.md) before applying it.
 
 Do not stop after `001`: the later migrations upgrade annotation anchors, protect member email columns, make public views obey RLS, and add content limits.
 
@@ -60,7 +63,7 @@ Do not stop after `001`: the later migrations upgrade annotation anchors, protec
 
 Apply only migration numbers newer than the last migration already applied. Back up the database first. Migration `004` is the security patch for existing installations.
 
-Before production, test the Data API with `anon`, ordinary authenticated, and admin identities. Collab Mode is intended for a trusted group; protect the site with Cloudflare Access or an equivalent edge allowlist if arbitrary GitHub users must not join.
+Before production, test the Data API with `anon`, ordinary authenticated, and admin identities. Collab Mode requires approved members (migration `005`). Protect private HTML, attachments, search indexes and preview URLs with an edge allowlist as well; an edge login does not replace database membership policies.
 
 ## Themes
 
