@@ -334,7 +334,11 @@ window.addEventListener("resize", function () {
   // Desktop explorer opens by default, and it stays open when the window is resized
   // to mobile screen size. Applies `no-scroll` to <html> in this edge case.
   const explorer = document.querySelector(".explorer")
-  if (explorer && !explorer.classList.contains("collapsed")) {
+  const mobileExplorer = explorer?.querySelector<HTMLElement>(".mobile-explorer")
+  // Mobile browser chrome resizes the viewport while scrolling. Hidden site
+  // navigation is not an open drawer and must never move the page offscreen.
+  const mobileExplorerVisible = !!mobileExplorer && mobileExplorer.getClientRects().length > 0
+  if (explorer && mobileExplorerVisible && !explorer.classList.contains("collapsed")) {
     document.documentElement.classList.add("mobile-no-scroll")
     setMobileExplorerLock(true)
     return
