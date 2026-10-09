@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "source": "jarvis7778-lgtm/quartz-sop-template",
-  "version": "v0.1.0",
-  "commit": "e50fe094f71dde406a04cf55210ae7acc5a33d0c",
+  "version": "v0.1.1",
+  "commit": "9279e3884757a2a42ed4fb740456362003fed872",
   "files": {
     "quartz/bootstrap-cli.mjs": {
       "sha256": "f4ed5151cf3737666ddfc214f1cd189ce24922194a66c7b1bb4838ca7b8dba81"
@@ -215,7 +215,7 @@
       "sha256": "0eb895cd4e6e7fb026c30aadd3c0db29e5794793da562505c7da85a995558b82"
     },
     "quartz/components/scripts/explorer.inline.ts": {
-      "sha256": "db881aaa5c1c9dee67150e915d136bbca45e932ca8bf0c2a23f163730ee32fa4"
+      "sha256": "b099c00f23ebff14acd17655154c052c882a9808fb5db4d3ac36a383fc172742"
     },
     "quartz/components/scripts/graph.inline.ts": {
       "sha256": "a2d3632f2870f1a3b9a0b208f5b0d5e124eb00813b0fe3a3afa580d854e22c01"
@@ -677,7 +677,7 @@
       "sha256": "7fdf0acba6259bb72217ac87ba891fd4b9314d67112879d286be50991c7f45f1"
     },
     "tests/browser/product-defects.spec.ts": {
-      "sha256": "3a10f24d2a871242a10e3a4e41dccd567c8b5b43235b850deaf69f94dde0a708"
+      "sha256": "40166803b8c9d98deae8f9d69f34ceb2c717348324e3c72fc2900c4d8d46b82e"
     },
     "package.json": {
       "sha256": "7753a59164aefc93e383a8e2b9e4f0570e74a8b944b72da4df98158b0ffd323d"

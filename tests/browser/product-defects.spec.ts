@@ -83,6 +83,18 @@ test("mobile menu has an accessible name", async ({ page }) => {
   await expect(page.locator(".mobile-explorer")).toHaveAttribute("aria-expanded", "false")
 })
 
+test("hidden mobile Explorer never locks content on viewport resize", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto("/")
+  await page.locator(".sidebar.left").evaluate((el) => {
+    ;(el as HTMLElement).style.display = "none"
+  })
+  await page.locator(".explorer").evaluate((el) => el.classList.remove("collapsed"))
+  await page.setViewportSize({ width: 390, height: 760 })
+  await expect(page.locator("#quartz-body")).not.toHaveClass(/lock-scroll/)
+  await expect(page.locator("html")).not.toHaveClass(/mobile-no-scroll/)
+})
+
 test("sample article has one page heading", async ({ page }) => {
   await page.goto("/sop/example-onboarding")
   await expect(page.locator("h1")).toHaveCount(1)
