@@ -1,4 +1,5 @@
 import { FullSlug, joinSegments } from "../../util/path"
+import path from "path"
 import { QuartzEmitterPlugin } from "../types"
 
 // @ts-ignore
@@ -16,7 +17,7 @@ import {
   processGoogleFonts,
 } from "../../util/theme"
 import { Features, transform } from "lightningcss"
-import { transform as transpile } from "esbuild"
+import { build as bundle, transform as transpile } from "esbuild"
 import { write } from "./helpers"
 import { themeRegistry, buildAllPresetTokens } from "../../../themes"
 import { siteFeatureConfig } from "../../../site.features"
@@ -326,6 +327,19 @@ export const ComponentResources: QuartzEmitterPlugin = () => {
         }
       }
 
+      componentResources.afterDOMLoaded.push(`
+        let mermaidNavigation = 0
+        document.addEventListener("nav", async () => {
+          const run = ++mermaidNavigation
+          const source = document.querySelector('meta[name="mermaid-module"]')?.content
+          if (!source || !document.querySelector("code.mermaid")) return
+          try {
+            const module = await import(new URL(source, document.baseURI).href)
+            if (run === mermaidNavigation) await module.initMermaid()
+          } catch (error) { console.error("Mermaid rendering failed", error) }
+        })
+      `)
+
       // important that this goes *after* component scripts
       // as the "nav" event gets triggered here and we should make sure
       // that everyone else had the chance to register a listener for it
@@ -382,6 +396,30 @@ export const ComponentResources: QuartzEmitterPlugin = () => {
         ext: ".js",
         content: postscript,
       })
+
+      // Keep assets available when the dev server adds its first diagram.
+      // Only diagram pages request them; plain-page payload remains small.
+
+      const mermaid = await bundle({
+        entryPoints: ["quartz/components/scripts/mermaid.inline.ts"],
+        bundle: true,
+        minify: true,
+        platform: "browser",
+        format: "esm",
+        splitting: true,
+        outdir: ".quartz-cache/mermaid",
+        entryNames: "mermaid",
+        chunkNames: "mermaid-[hash]",
+        write: false,
+      })
+      for (const output of mermaid.outputFiles) {
+        yield write({
+          ctx,
+          slug: joinSegments("static", path.basename(output.path)) as FullSlug,
+          ext: "",
+          content: Buffer.from(output.contents),
+        })
+      }
     },
     async *partialEmit() {},
   }

@@ -12,6 +12,7 @@ import { renderWeekView, renderMonthView, renderDayView, getRangeText } from "./
 import { openModal, closeModal, handleSave, handleDelete } from "./calendar/modal"
 import { initDragSystem } from "./calendar/drag"
 import { initRealtime } from "./calendar/realtime"
+import { readMembership, membershipMessage } from "./membership"
 
 async function init() {
   const container = document.getElementById("reservation-calendar")
@@ -278,9 +279,10 @@ async function init() {
       const {
         data: { user },
       } = await client!.auth.getUser()
-      state.currentUser = user
+      const status = user ? await readMembership(client) : null
+      state.currentUser = status === "approved" ? user : null
 
-      if (user) {
+      if (state.currentUser) {
         const { data } = await client!
           .from("users")
           .select("id, username, avatar_url, role")
@@ -290,12 +292,17 @@ async function init() {
         loginPrompt!.style.display = "none"
       } else {
         state.currentUserDbRecord = null
+        loginPrompt!.textContent = status ? membershipMessage[status] : "请先登录并获得管理员批准"
         loginPrompt!.style.display = "block"
       }
     }
 
     const { data: authListener } = client.auth.onAuthStateChange(() => {
-      updateUserState()
+      setTimeout(async () => {
+        if (!container.isConnected) return
+        await updateUserState()
+        if (container.isConnected) await renderCurrentView()
+      }, 0)
     })
     cleanup.add(() => authListener?.subscription?.unsubscribe?.())
 

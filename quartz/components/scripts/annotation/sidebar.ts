@@ -187,6 +187,14 @@ function createCard(ann: Annotation): HTMLElement {
     </div>
   `
 
+  if (!document.querySelector(`mark[data-ann-id="${CSS.escape(ann.id)}"]`)) {
+    const status = document.createElement("p")
+    status.className = "ann-anchor-status"
+    status.textContent = "原文已变化或位置不明确，此批注需要重新定位。"
+    status.setAttribute("role", "status")
+    card.prepend(status)
+  }
+
   // 点击卡片 → 滚动到高亮
   card.addEventListener("click", (e) => {
     const target = e.target as HTMLElement

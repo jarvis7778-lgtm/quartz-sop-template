@@ -44,4 +44,4 @@ A configuration such as `auth: false, reservations: true` fails the build instea
 
 ## Production boundary
 
-The default GitHub OAuth flow does not implement an application-level GitHub organization allowlist. For a private team site, use Cloudflare Access or another edge identity allowlist and test RLS with anonymous, member and administrator identities before launch.
+GitHub OAuth authenticates identity; migration `005` separately requires explicit membership approval. New identities and legacy non-admins are pending until approved. Read `docs/collab-security-upgrade.md` for administrator bootstrap and recovery. For a private team site, protect static HTML, attachments, indexes and every preview URL using edge access control as well. Test anonymous, pending, approved, revoked and administrator identities against the Data API before launch.

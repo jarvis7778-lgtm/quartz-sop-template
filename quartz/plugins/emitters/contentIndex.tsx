@@ -119,7 +119,7 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
         }
       }
 
-      if (opts?.enableSiteMap) {
+      if (opts?.enableSiteMap && cfg.baseUrl) {
         yield write({
           ctx,
           content: generateSiteMap(cfg, linkIndex),
@@ -128,7 +128,7 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
         })
       }
 
-      if (opts?.enableRSS) {
+      if (opts?.enableRSS && cfg.baseUrl) {
         yield write({
           ctx,
           content: generateRSSFeed(cfg, linkIndex, opts.rssLimit),
@@ -157,7 +157,7 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
       })
     },
     externalResources: (ctx) => {
-      if (opts?.enableRSS) {
+      if (opts?.enableRSS && ctx.cfg.configuration.baseUrl) {
         return {
           additionalHead: [
             <link

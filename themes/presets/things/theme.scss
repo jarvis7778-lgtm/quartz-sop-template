@@ -633,6 +633,8 @@ body[data-theme-preset="things"] {
     }
 
     .center {
+      box-sizing: border-box;
+      min-width: 0;
       padding-inline: 1rem;
       background: var(--th-paper);
     }

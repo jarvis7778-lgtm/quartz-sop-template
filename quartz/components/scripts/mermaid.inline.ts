@@ -185,12 +185,14 @@ const cssVars = [
 ] as const
 
 let mermaidImport = undefined
-document.addEventListener("nav", async () => {
+export async function initMermaid() {
   const center = document.querySelector(".center") as HTMLElement
+  if (!center) return
   const nodes = center.querySelectorAll("code.mermaid") as NodeListOf<HTMLElement>
   if (nodes.length === 0) return
 
   mermaidImport ||= await import("mermaid")
+  if (!center.isConnected) return
   const mermaid = mermaidImport.default
 
   const textMapping: WeakMap<HTMLElement, string> = new WeakMap()
@@ -204,7 +206,7 @@ document.addEventListener("nav", async () => {
       node.removeAttribute("data-processed")
       const oldText = textMapping.get(node)
       if (oldText) {
-        node.innerHTML = oldText
+        node.textContent = oldText
       }
     }
 
@@ -219,7 +221,7 @@ document.addEventListener("nav", async () => {
     const darkMode = document.documentElement.getAttribute("saved-theme") === "dark"
     mermaid.initialize({
       startOnLoad: false,
-      securityLevel: "loose",
+      securityLevel: "strict",
       theme: darkMode ? "dark" : "base",
       themeVariables: {
         fontFamily: computedStyleMap["--codeFont"],
@@ -238,6 +240,7 @@ document.addEventListener("nav", async () => {
   }
 
   await renderMermaid()
+  if (!center.isConnected) return
   document.addEventListener("themechange", renderMermaid)
   window.addCleanup(() => document.removeEventListener("themechange", renderMermaid))
 
@@ -294,4 +297,4 @@ document.addEventListener("nav", async () => {
       expandBtn.removeEventListener("click", showMermaid)
     })
   }
-})
+}

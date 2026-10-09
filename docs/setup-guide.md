@@ -45,6 +45,7 @@ Create a Supabase project and apply every migration in numeric order:
 002_user_sync_and_rls_patch.sql
 003_annotations_schema_update.sql
 004_security_and_content_constraints.sql
+005_collab_membership_and_named_equipment.sql
 ```
 
 Configure GitHub OAuth in Supabase, including the final callback URLs. Then build with:

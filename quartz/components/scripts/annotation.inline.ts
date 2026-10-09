@@ -12,6 +12,7 @@
 
 import type { Annotation, SupabaseClient } from "./annotation/types"
 import { getArticleRoot } from "./annotation/anchor"
+import { readMembership, membershipMessage } from "./membership"
 import { fetchAnnotations, getCurrentUserId } from "./annotation/data"
 import { applyAllHighlights, clearAllHighlights } from "./annotation/highlight"
 import { initSelection } from "./annotation/selection"
@@ -219,6 +220,24 @@ async function init() {
   if (isStaleRun(runToken)) return
   if (!client) {
     console.log("[annotation] Supabase 未就绪，批注功能不可用")
+    return
+  }
+
+  const { data: listener } = client.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_IN" || event === "SIGNED_OUT") setTimeout(() => void init(), 0)
+  })
+  addLocalCleanup(() => listener?.subscription?.unsubscribe())
+  window.addCleanup(() => {
+    runCleanup()
+    clearAllHighlights()
+    clearSidebar()
+  })
+  const status = await readMembership(client)
+  if (isStaleRun(runToken)) return
+  if (status !== "approved") {
+    const panel = document.getElementById("annotation-sidebar-list")
+    if (panel) panel.textContent = membershipMessage[status]
+    setCurrentUserId(null)
     return
   }
 

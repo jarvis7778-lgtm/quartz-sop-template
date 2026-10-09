@@ -81,6 +81,8 @@ export default ((userOpts?: Partial<Options>) => {
           class="explorer-toggle mobile-explorer hide-until-loaded"
           data-mobile={true}
           aria-controls={id}
+          aria-label={opts.title ?? i18n(cfg.locale).components.explorer.title}
+          aria-expanded={false}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

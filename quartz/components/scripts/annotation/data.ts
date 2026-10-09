@@ -3,6 +3,7 @@
  */
 
 import type { Annotation, SupabaseClient } from "./types"
+import { readMembership } from "../membership"
 
 interface UserProfile {
   id: string
@@ -126,7 +127,7 @@ export async function getCurrentUserId(): Promise<string | null> {
     const {
       data: { user },
     } = await client.auth.getUser()
-    return user?.id || null
+    return user && (await readMembership(client)) === "approved" ? user.id : null
   } catch {
     return null
   }

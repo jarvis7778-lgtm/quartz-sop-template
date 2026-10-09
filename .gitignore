@@ -22,3 +22,5 @@ replit.nix
 
 # local preview builds (regenerable)
 preview/
+test-results/
+playwright-report/

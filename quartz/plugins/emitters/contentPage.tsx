@@ -5,7 +5,7 @@ import HeaderConstructor from "../../components/Header"
 import BodyConstructor from "../../components/Body"
 import { pageResources, renderPage } from "../../components/renderPage"
 import { FullPageLayout } from "../../cfg"
-import { pathToRoot } from "../../util/path"
+import { joinSegments, pathToRoot } from "../../util/path"
 import { defaultContentPageLayout, sharedPageComponents } from "../../../quartz.layout"
 import { Content } from "../../components"
 import { styleText } from "util"
@@ -14,6 +14,7 @@ import { BuildCtx } from "../../util/ctx"
 import { Node } from "unist"
 import { StaticResources } from "../../util/resources"
 import { QuartzPluginData } from "../vfile"
+import mermaidStyle from "../../components/styles/mermaid.inline.scss"
 
 async function processContent(
   ctx: BuildCtx,
@@ -26,6 +27,15 @@ async function processContent(
   const slug = fileData.slug!
   const cfg = ctx.cfg.configuration
   const externalResources = pageResources(pathToRoot(slug), resources)
+  if (fileData.hasMermaidDiagram) {
+    externalResources.css.push({ content: mermaidStyle, inline: true })
+    externalResources.additionalHead.push(
+      <meta
+        name="mermaid-module"
+        content={joinSegments(pathToRoot(slug), "static", "mermaid.js")}
+      />,
+    )
+  }
   const componentData: QuartzComponentProps = {
     ctx,
     fileData,

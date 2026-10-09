@@ -97,7 +97,7 @@ describe("release contracts", () => {
   test("default math resources are bundled rather than fetched from jsDelivr", () => {
     const latex = read("quartz/plugins/transformers/latex.ts")
     assert.doesNotMatch(latex, /cdn\.jsdelivr\.net\/npm\/katex/)
-    assert.match(latex, /katex\/dist\/katex\.min\.css/)
+    assert.match(latex, /static\/katex\/katex\.min\.css/)
   })
 })
 

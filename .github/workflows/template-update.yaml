@@ -1,0 +1,114 @@
+name: Check template updates
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: template-update
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository != 'jarvis7778-lgtm/quartz-sop-template'
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+      version: ${{ steps.check.outputs.version }}
+      base: ${{ steps.base.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Check official release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/check-template-update.mjs
+      - name: Fetch immutable release source and prepare update
+        if: steps.check.outputs.available == 'true'
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          SOURCE="$RUNNER_TEMP/template-source"
+          git init "$SOURCE"
+          git -C "$SOURCE" fetch --depth=1 https://github.com/jarvis7778-lgtm/quartz-sop-template.git "refs/tags/$VERSION"
+          COMMIT=$(git -C "$SOURCE" rev-parse 'FETCH_HEAD^{commit}')
+          git -C "$SOURCE" checkout --detach "$COMMIT"
+          node scripts/core-update.mjs apply --root "$GITHUB_WORKSPACE" --source "$SOURCE" --version "$VERSION" --commit "$COMMIT"
+      - name: Validate candidate without repository write credentials
+        if: steps.check.outputs.available == 'true'
+        env:
+          SITE_MODE: static
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          npm ci
+          npx tsc --noEmit
+          node --test scripts/core-update.test.mjs scripts/check-template-update.test.mjs
+          npx quartz build
+          git diff --check
+          git add -A
+          git diff --cached --binary > "$RUNNER_TEMP/template-update.patch"
+      - uses: actions/upload-artifact@v4
+        if: steps.check.outputs.available == 'true'
+        with:
+          name: template-update-patch
+          path: ${{ runner.temp }}/template-update.patch
+          retention-days: 7
+          if-no-files-found: error
+      - name: Explain blocked updates
+        if: failure()
+        run: |
+          printf '%s\n' '## Update blocked' 'No production deployment or automatic merge was performed. Check the failed step for custom core conflicts, missing adoption lock or build errors. Do not reset your files to bypass a conflict.' >> "$GITHUB_STEP_SUMMARY"
+
+  propose:
+    needs: prepare
+    if: needs.prepare.outputs.available == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.base }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: template-update-patch
+          path: ${{ runner.temp }}/candidate
+      - name: Create reviewed update branch and PR (never merge)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          BRANCH="template-update/$VERSION"
+          gh auth setup-git
+          if git ls-remote --exit-code origin "refs/heads/$BRANCH" >/dev/null; then
+            printf 'Update branch %s already exists; preserving it. Review existing PR/branch.\n' "$BRANCH" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git switch -c "$BRANCH"
+          git apply --index "$RUNNER_TEMP/candidate/template-update.patch"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "chore: update template core to $VERSION"
+          git push origin "$BRANCH"
+          gh pr create --repo "$REPOSITORY" --base "$DEFAULT_BRANCH" --head "$BRANCH" \
+            --title "Template update available: $VERSION" \
+            --body "Core update to $VERSION. Candidate passed typecheck, tests and static build in this workflow. Your content, site configuration, custom CSS/static assets and database were not updated. Review upstream release notes: https://github.com/jarvis7778-lgtm/quartz-sop-template/releases/tag/$VERSION . SQL migration or configuration changes require a separate reviewed operation. Merge to publish through your existing deployment workflow; revert this PR to roll back code. PR events created with GITHUB_TOKEN do not automatically run other workflows. This run provides candidate checks; no hosted preview is provisioned."

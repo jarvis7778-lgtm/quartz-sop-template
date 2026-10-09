@@ -11,15 +11,14 @@ A reusable template for publishing team standard operating procedures, onboardin
 
 - Markdown/Obsidian authoring workflow
 - Quartz-powered static site generation
-- GitHub OAuth sign-in via Supabase
-- Page comments and threaded replies
-- Page-level annotations
-- Reservation calendar for shared resources
+- Full-text search and page navigation
+- Eight visual presets and reader mode
+- Portable Markdown and image files
+- Optional collaboration after administrator setup (not enabled in Static Mode)
 
 ## Start here
 
 - [[sop/index|SOP Library]]
-- [[calendar|Reservation Calendar]]
 - [[sop/example-onboarding|Example: New Member Onboarding]]
 - [[sop/example-shared-resource|Example: Shared Resource Booking]]
 

@@ -173,10 +173,7 @@ export function deserializeAnchor(anchor: AnchorData, root: HTMLElement): Range 
         return range
       }
 
-      // 文本不匹配，但路径有效 —— 仍尝试使用（DOM 可能有微调）
-      if (restored.length > 0) {
-        return range
-      }
+      // A surviving DOM path is not evidence that its text is still the quote.
     } catch (e) {
       console.warn("[annotation] CSS 路径还原失败:", e)
     }
@@ -222,7 +219,8 @@ function findTextInNode(root: HTMLElement, searchText: string): Range | null {
     return findByNormalizedText(textNodes, normalizedSearch)
   }
 
-  // 找到了精确位置，定位到 Range
+  // Repeated quotes are ambiguous after a path changes; never guess.
+  if (fullText.indexOf(searchText, idx + 1) !== -1) return null
   return textOffsetToRange(textNodes, idx, idx + searchText.length)
 }
 
@@ -270,49 +268,27 @@ function textOffsetToRange(
  * 规范化文本搜索（处理空白差异）
  */
 function findByNormalizedText(textNodes: Text[], searchText: string): Range | null {
-  // 构建规范化文本到原始位置的映射
-  let rawOffset = 0
-  let normOffset = 0
-  const mapping: Array<{ rawStart: number; rawEnd: number; normStart: number; normEnd: number }> =
-    []
-
-  for (const node of textNodes) {
-    const raw = node.textContent || ""
-    for (let i = 0; i < raw.length; i++) {
-      const ch = raw[i]
-      if (/\s/.test(ch)) {
-        // 空白字符：如果前一个也是空白则跳过
-        if (normOffset === 0 || mapping.length === 0) {
-          // 开头空白跳过
-        } else {
-          const prev = mapping[mapping.length - 1]
-          if (prev && prev.normEnd === normOffset) {
-            // 连续空白，只映射一个空格
-          }
-        }
-        // 简化：不做精细映射，直接用近似
-      }
-      rawOffset++
+  const raw = textNodes.map((node) => node.textContent || "").join("")
+  const positions: Array<{ start: number; end: number }> = []
+  let normalized = ""
+  for (const match of raw.matchAll(/\s+|[^\s]/gu)) {
+    const whitespace = /\s/.test(match[0])
+    normalized += whitespace ? " " : match[0]
+    // Range offsets use UTF-16 units, including surrogate pairs.
+    for (let unit = 0; unit < (whitespace ? 1 : match[0].length); unit++) {
+      positions.push({
+        start: match.index + unit,
+        end: match.index + (whitespace ? match[0].length : unit + 1),
+      })
     }
   }
-
-  // 简化回退：遍历寻找近似匹配
-  const fullRaw = textNodes.map((n) => n.textContent || "").join("")
-  const words = searchText.split(/\s+/).filter(Boolean)
-  if (words.length === 0) return null
-
-  // 找第一个词的位置
-  const firstWord = words[0]
-  let pos = fullRaw.indexOf(firstWord)
-  if (pos === -1) return null
-
-  // 找最后一个词的结束位置
-  const lastWord = words[words.length - 1]
-  const lastPos = fullRaw.indexOf(lastWord, pos)
-  if (lastPos === -1) return null
-
-  const end = lastPos + lastWord.length
-  return textOffsetToRange(textNodes, pos, end)
+  const start = normalized.indexOf(searchText)
+  if (start < 0 || normalized.indexOf(searchText, start + 1) !== -1) return null
+  return textOffsetToRange(
+    textNodes,
+    positions[start].start,
+    positions[start + searchText.length - 1].end,
+  )
 }
 
 /**
@@ -321,14 +297,5 @@ function findByNormalizedText(textNodes: Text[], searchText: string): Range | nu
 function isSimilar(a: string, b: string): boolean {
   const na = a.replace(/\s+/g, " ").trim()
   const nb = b.replace(/\s+/g, " ").trim()
-  if (na === nb) return true
-  // 允许少量差异（编辑距离阈值：10% 的长度）
-  const maxLen = Math.max(na.length, nb.length)
-  if (maxLen === 0) return true
-  // 简单的前缀/子串检查
-  if (na.includes(nb) || nb.includes(na)) return true
-  // 前 80% 匹配也算
-  const checkLen = Math.floor(maxLen * 0.8)
-  if (checkLen > 0 && na.substring(0, checkLen) === nb.substring(0, checkLen)) return true
-  return false
+  return na.length > 0 && na === nb
 }

@@ -140,7 +140,11 @@ export async function saveReservation(
 
     if (error) {
       console.error("更新预约失败:", error)
-      throw new Error(error.message)
+      throw new Error(
+        error.code === "23P01"
+          ? "该资源在此时段已被预约，请刷新日历并选择其他时间。"
+          : error.message,
+      )
     }
   } else {
     // 新建
@@ -156,7 +160,11 @@ export async function saveReservation(
 
     if (error) {
       console.error("创建预约失败:", error)
-      throw new Error(error.message)
+      throw new Error(
+        error.code === "23P01"
+          ? "该资源在此时段已被预约，请刷新日历并选择其他时间。"
+          : error.message,
+      )
     }
   }
 }

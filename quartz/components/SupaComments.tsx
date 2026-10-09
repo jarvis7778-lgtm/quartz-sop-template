@@ -32,6 +32,12 @@ export default ((userOpts?: SupaCommentsOptions) => {
         data-page-path={pagePath}
       >
         <h3 class="comments-title">{opts.title}</h3>
+        <p>
+          其他成员的评论刷新后同步。
+          <button type="button" id="refresh-comments">
+            刷新评论
+          </button>
+        </p>
 
         {/* 需要登录提示 */}
         <div id="comments-login-prompt" class="comments-login-prompt" style={{ display: "none" }}>
@@ -316,8 +322,8 @@ export default ((userOpts?: SupaCommentsOptions) => {
         return \`
           <div class="comment-item" data-comment-id="\${comment.id}">
             <div class="comment-header">
-              <img class="comment-avatar" src="\${comment.author?.avatar_url || ''}" alt="" />
-              <span class="comment-author">\${comment.author?.username || '匿名用户'}</span>
+              <img class="comment-avatar" src="\${escapeHtml(comment.author?.avatar_url || '')}" alt="" />
+              <span class="comment-author">\${escapeHtml(comment.author?.username || '匿名用户')}</span>
               <span class="comment-time">\${formatTime(comment.created_at)}</span>
             </div>
             <div class="comment-content">\${escapeHtml(comment.content)}</div>
@@ -337,11 +343,16 @@ export default ((userOpts?: SupaCommentsOptions) => {
       function escapeHtml(text) {
         const div = document.createElement('div')
         div.textContent = text
-        return div.innerHTML
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;')
       }
       
       // 加载评论
       async function loadComments() {
+        if (!currentUser) {
+          commentsList.innerHTML = ''
+          emptyPrompt.style.display = 'none'
+          return
+        }
         try {
           // 获取评论 (包含作者信息)
           const { data: comments, error } = await client
@@ -463,6 +474,18 @@ export default ((userOpts?: SupaCommentsOptions) => {
         currentUser = await getCurrentUser()
         
         if (currentUser) {
+          const status = await window.readCollaborationMembership(client)
+          if (run !== commentsRun || !container.isConnected) return
+          if (status !== 'approved') {
+            currentUser = null
+            currentUserDbRecord = null
+            loginPrompt.textContent = window.collaborationMembershipMessage[status]
+            loginPrompt.style.display = 'block'
+            inputArea.style.display = 'none'
+            commentsList.innerHTML = ''
+            emptyPrompt.style.display = 'none'
+            return
+          }
           // 获取用户数据库记录
           const { data } = await client
             .from('users')
@@ -474,6 +497,8 @@ export default ((userOpts?: SupaCommentsOptions) => {
           loginPrompt.style.display = 'none'
           inputArea.style.display = 'block'
         } else {
+          currentUserDbRecord = null
+          loginPrompt.textContent = '请先登录并获得管理员批准后参与评论'
           loginPrompt.style.display = 'block'
           inputArea.style.display = 'none'
         }
@@ -501,14 +526,26 @@ export default ((userOpts?: SupaCommentsOptions) => {
         submitBtn.disabled = false
       })
       
+      const refreshBtn = container.querySelector('#refresh-comments')
+      const onRefresh = async () => {
+        refreshBtn.disabled = true
+        await updateUserState()
+        if (run === commentsRun && container.isConnected) await loadComments()
+        refreshBtn.disabled = false
+      }
+      refreshBtn.addEventListener('click', onRefresh)
+
       // 监听登录状态变化
       const { data: authListener } = client.auth.onAuthStateChange(() => {
         if (run !== commentsRun || !container.isConnected) return
-        updateUserState()
-        loadComments()
+        setTimeout(async () => {
+          await updateUserState()
+          if (run === commentsRun && container.isConnected) await loadComments()
+        }, 0)
       })
       window.addCleanup(() => {
         commentsRun++
+        refreshBtn.removeEventListener('click', onRefresh)
         authListener?.subscription?.unsubscribe?.()
       })
       
