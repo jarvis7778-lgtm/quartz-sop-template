@@ -713,10 +713,10 @@
       "sha256": "c7f4c330d91ea14050b9f54117f1224a126a1ef864b173e687cdee61dfad674f"
     },
     "scripts/verify-postgres-migrations.sh": {
-      "sha256": "6c7cd316731dcd288715627bfba72f1a832ecad1cab8c4dacbd152fddf52533a"
+      "sha256": "5a6c672714e17b4d77b4e3a36994b191fa85be88e0b8fc56ac2c33c489696936"
     },
     "scripts/test-collab-security-postgres.sh": {
-      "sha256": "b6dc91b1010b202a77f19ab96f3527cba38ec6a4b00f210925032e3dd5972f5f"
+      "sha256": "12279b0bdc20ba91e111e45053f8a6324d7bd6b8a5fd41ccd56b6a10c89cc181"
     },
     "scripts/serve-test-site.mjs": {
       "sha256": "99358bc2e13d631de5a957d3cce735f6de7b1b6a6bd8f86705ccb33b333d389f"

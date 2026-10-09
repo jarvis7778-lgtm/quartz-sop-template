@@ -22,10 +22,10 @@ fi
 
 docker run --name "$name" -e POSTGRES_PASSWORD=postgres -d "$image" >/dev/null
 for _ in $(seq 1 30); do
-  docker exec "$name" pg_isready -U postgres >/dev/null 2>&1 && break
+  docker exec "$name" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1 && break
   sleep 1
 done
-docker exec "$name" pg_isready -U postgres >/dev/null
+docker exec "$name" pg_isready -h 127.0.0.1 -U postgres >/dev/null
 
 # This models Supabase auth.uid() from the request JWT subject. Every RLS
 # assertion below uses an actual PostgreSQL role and a distinct identity.

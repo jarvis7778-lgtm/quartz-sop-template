@@ -17,10 +17,10 @@ fi
 
 docker run --name "$name" -e POSTGRES_PASSWORD=postgres -d postgres:17-alpine >/dev/null
 for _ in $(seq 1 30); do
-  docker exec "$name" pg_isready -U postgres >/dev/null 2>&1 && break
+  docker exec "$name" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1 && break
   sleep 1
 done
-docker exec "$name" pg_isready -U postgres >/dev/null
+docker exec "$name" pg_isready -h 127.0.0.1 -U postgres >/dev/null
 
 docker exec -i "$name" psql -v ON_ERROR_STOP=1 -U postgres postgres <<'SQL'
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
