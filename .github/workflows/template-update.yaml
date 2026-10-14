@@ -21,10 +21,10 @@ jobs:
       version: ${{ steps.check.outputs.version }}
       base: ${{ steps.base.outputs.sha }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
       - id: base
@@ -60,7 +60,7 @@ jobs:
           git diff --check
           git add -A
           git diff --cached --binary > "$RUNNER_TEMP/template-update.patch"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.check.outputs.available == 'true'
         with:
           name: template-update-patch
@@ -80,11 +80,11 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.prepare.outputs.base }}
           persist-credentials: false
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: template-update-patch
           path: ${{ runner.temp }}/candidate
